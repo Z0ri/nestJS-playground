@@ -21,13 +21,11 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    const user = request.user; //utente nella richiesta inserito nell'auth guard
-    console.log('user: ', user);
+    const user = request.user;
     if (!user) {
       throw new HttpException('Utente non autenticato', HttpStatus.FORBIDDEN);
     }
-
-    if (requiredRoles.includes(user.role)) {
+    if (requiredRoles.includes(request.user.role)) {
       return true;
     } else {
       throw new HttpException(

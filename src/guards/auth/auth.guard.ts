@@ -13,10 +13,9 @@ export class AuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const request = context.switchToHttp().getRequest();
     if (request && request.headers) {
       const token = extractTokenFromHeader(request); //estraggo il token dall'header della richiesta
-
       if (!token) {
         throw new UnauthorizedException('Token di autorizzazione non fornito');
       }
