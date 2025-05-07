@@ -22,7 +22,7 @@ import { RolesGuard } from 'src/guards/roles/roles.guard';
 import { UserInterface } from 'src/interfaces/user.interface';
 import { UserService } from 'src/services/user/user.service';
 
-// @UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}

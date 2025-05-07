@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { ProductInterface } from 'src/interfaces/product.interface';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { UserEntity } from 'src/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -14,7 +15,12 @@ export class ProductsService {
     @InjectRepository(ProductEntity, 'readOnlyConnection')
     private readonly readOnlyProductsRepository: Repository<ProductEntity>,
     @InjectRepository(ProductEntity, 'writeOnlyConnection')
-    private readonly writeOnlyRepository: Repository<ProductEntity>,
+    private readonly writeOnlyProductsRepository: Repository<ProductEntity>,
+    
+    @InjectRepository(UserEntity, 'readOnlyConnection')
+    private readonly readOnlyUserRepository: Repository<UserEntity>,
+    @InjectRepository(UserEntity, 'writeOnlyConnection')
+    private readonly writeOnlyUserRepository: Repository<UserEntity>,
 
     private readonly httpService: HttpService,
   ) {}
@@ -30,20 +36,27 @@ export class ProductsService {
           'https://fakestoreapi.com/products',
         ),
       );
-
+  
       const products: ProductInterface[] = response.data;
-
+  
+      // Create product entities without the owner property
       const productEntities: ProductEntity[] = products.map((product) => {
-        return new ProductEntity(
+        const productEntity = new ProductEntity(
           product.title,
           product.price,
           product.description,
           product.category,
           product.image,
         );
+        // Important: initialize the owner property to null or it can be omitted
+        // This is because the relationship is optional from the Product side
+        return productEntity;
       });
-      return this.writeOnlyRepository.save(productEntities);
+  
+      // Save the products to the database
+      return this.writeOnlyProductsRepository.save(productEntities);
     } catch (error) {
+      console.error("Error inserting default products:", error);
       throw new HttpException(
         "Errore nell'inserimento dei prodotti di default",
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -125,7 +138,7 @@ export class ProductsService {
         newProduct.category,
         newProduct.image,
       );
-      return await this.writeOnlyRepository.save(productEntity);
+      return await this.writeOnlyProductsRepository.save(productEntity);
     } catch (error) {
       throw new HttpException(
         {
@@ -148,7 +161,7 @@ export class ProductsService {
     newProduct: ProductInterface,
   ): Promise<{ message: string; updatedProduct: ProductInterface }> {
     try {
-      const existingProduct = await this.writeOnlyRepository.findOne({
+      const existingProduct = await this.writeOnlyProductsRepository.findOne({
         where: { key },
       });
 
@@ -161,7 +174,7 @@ export class ProductsService {
         );
       }
 
-      const updateResult = await this.writeOnlyRepository.update(
+      const updateResult = await this.writeOnlyProductsRepository.update(
         { key },
         newProduct,
       );
@@ -175,7 +188,7 @@ export class ProductsService {
         );
       }
 
-      const updatedProduct = await this.writeOnlyRepository.findOne({
+      const updatedProduct = await this.writeOnlyProductsRepository.findOne({
         where: { key },
       });
 
@@ -195,12 +208,78 @@ export class ProductsService {
   }
 
   /**
+   * Effettua l'acquisto di un prodotto
+   * @param buyerId id del compratore
+   * @param productId id del prodotto comprato
+   */
+  async buyProduct(buyerId: number, productKey: string) {
+    try {
+      const buyer: UserEntity = await this.readOnlyUserRepository.findOne({
+        where: { id: buyerId }
+      });
+  
+      if (!buyer) {
+        throw new HttpException("Nessun utente trovato con l'id specificato", HttpStatus.NOT_FOUND);
+      }
+  
+      // Trova il prodotto
+      const product: ProductEntity = await this.readOnlyProductsRepository.findOne({
+        where: { key: productKey },
+        relations: { owner: true }
+      });
+  
+      if (!product) {
+        throw new HttpException("Nessun prodotto trovato con l'id specificato", HttpStatus.NOT_FOUND);
+      }
+  
+      // Verifica se l'utente è il proprietario del prodotto
+      if (product.owner && product.owner.id === buyer.id) {
+        throw new HttpException("Prodotto già posseduto dall'utente", HttpStatus.CONFLICT);
+      }
+  
+      // Verifica se l'utente ha abbastanza soldi
+      if (buyer.money < product.price) {
+        throw new HttpException("Impossibile acquistare il prodotto: saldo insufficiente", HttpStatus.BAD_REQUEST);
+      }
+      
+      // sottrazione soldi dall'utente
+      await this.writeOnlyUserRepository.update(
+        { id: buyer.id },
+        { money: buyer.money - product.price }
+      );
+      
+      //associa il proprietario del prodotto all'utente
+      await this.writeOnlyProductsRepository.update(
+        { id: product.id },
+        { owner: { id: buyer.id } }
+      );
+  
+      return { message: 'Prodotto acquistato con successo' };
+  
+    } catch (error) {
+    
+      if (error instanceof HttpException) throw error;
+    
+      throw new HttpException(
+        {
+          message: "Errore imprevisto nell'acquisto del prodotto",
+          error: error.message || error.toString(),
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    
+  }
+  
+  
+
+  /**
    * Elimina un prodotto
    * @param key chiave del prodotto da eliminare
    */
   async deleteProduct(key: string) {
     try {
-      const result = await this.writeOnlyRepository.delete({ key });
+      const result = await this.writeOnlyProductsRepository.delete({ key });
 
       if (result.affected === 0) {
         throw new HttpException(
