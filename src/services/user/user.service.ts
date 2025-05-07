@@ -32,6 +32,7 @@ export class UserService {
           user.username,
           user.email,
           user.password,
+          user.money,
           user.role,
         );
         return userEntity;
