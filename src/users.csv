@@ -1,4 +1,4 @@
-username;email;password;role
-user1;user1@example.com;password123;Admin
-user2;user2@example.com;password456;Viewer
-user3;user3@example.com;password789;Editor
+username;email;password;money;role
+user1;user1@example.com;password123;100000000;Admin
+user2;user2@example.com;password456;20000;Viewer
+user3;user3@example.com;password789;80000;Editor
