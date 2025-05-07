@@ -218,6 +218,7 @@ export class ProductsService {
         where: { id: buyerId }
       });
   
+      // verifica se esiste l'utente
       if (!buyer) {
         throw new HttpException("Nessun utente trovato con l'id specificato", HttpStatus.NOT_FOUND);
       }
@@ -228,6 +229,7 @@ export class ProductsService {
         relations: { owner: true }
       });
   
+      // verifica se esiste il prodotto
       if (!product) {
         throw new HttpException("Nessun prodotto trovato con l'id specificato", HttpStatus.NOT_FOUND);
       }
@@ -235,6 +237,11 @@ export class ProductsService {
       // Verifica se l'utente è il proprietario del prodotto
       if (product.owner && product.owner.id === buyer.id) {
         throw new HttpException("Prodotto già posseduto dall'utente", HttpStatus.CONFLICT);
+      }
+
+      //verifica se il prodotto è già stato comprato
+      if(product.owner){
+        throw new HttpException("Impossibile acquistare il prodotto: prodotto già acquistato da qualcun'altro", HttpStatus.CONFLICT);
       }
   
       // Verifica se l'utente ha abbastanza soldi

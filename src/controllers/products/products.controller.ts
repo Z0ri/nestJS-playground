@@ -73,9 +73,7 @@ export class ProductsController {
   @Roles(Role.Admin, Role.Editor, Role.Viewer)
   @Post('/buy')
   async buyProduct(@Req() request: Request & {user: RequestWithUser}, @Query('key') productKey: string) {
-    console.log("reqeset.user: ", request.user)
     const buyerId = request.user.id;
-    console.log("buyerId: ", buyerId);
   
     try {
       return await this.productsService.buyProduct(buyerId, productKey);
