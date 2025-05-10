@@ -24,8 +24,8 @@ export class AuthGuard implements CanActivate {
         const user = await this.authService.validateToken(token); //validazione del token e assegnazione
         request.user = user; //imposto l'attributo "user" alla richiesta
         return true;
-      } catch {
-        throw new UnauthorizedException('Token non valido o scaduto');
+      } catch (error) {
+        throw new UnauthorizedException(error.message || 'Token non valido o scaduto');
       }
     }
   }
