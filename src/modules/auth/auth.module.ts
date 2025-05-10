@@ -4,18 +4,23 @@ import { AuthController } from 'src/controllers/auth/auth.controller';
 import { UserEntity } from 'src/entities/user.entity';
 import { AuthService } from 'src/services/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: 'secretKey',
-      signOptions: { expiresIn: '1h' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('SECRET_TOKEN'),
+        signOptions: { expiresIn: '24h' },
+      }),
     }),
-    TypeOrmModule.forFeature([UserEntity], 'readOnlyConnection'), // Registra l'entità UserEntity nel DB tramite la "readOnlyConnection"
-    TypeOrmModule.forFeature([UserEntity], 'writeOnlyConnection'), // Registra l'entità UserEntity nel DB tramite la "writeOnlyConnection"
+    TypeOrmModule.forFeature([UserEntity], 'readOnlyConnection'),
+    TypeOrmModule.forFeature([UserEntity], 'writeOnlyConnection'),
   ],
   controllers: [AuthController],
   providers: [AuthService],
-  exports: [AuthService, JwtModule], //permette agli altri moduli che importano UserModule di usare AuthService e JwtModule
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}
