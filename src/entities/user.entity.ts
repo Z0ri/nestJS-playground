@@ -16,13 +16,11 @@ export class UserEntity extends CommonEntity implements UserInterface {
     role: string = Role.Viewer,
   ) {
     super();
-    if (username && email && password && money) {
-      this.username = username;
-      this.email = email;
-      this.password = password;
-      this.money = money;
-      this.role = role;
-    }
+    this.username = username;
+    this.email = email;
+    this.password = password;
+    this.money = money;
+    this.role = role;
   }
 
   @OneToMany(() => ProductEntity, (product) => product.owner)

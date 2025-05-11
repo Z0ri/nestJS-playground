@@ -13,13 +13,11 @@ export class ProductEntity extends CommonEntity implements ProductInterface {
     image?: string,
   ) {
     super();
-    if (title && price && description && category && image) {
-      this.title = title;
-      this.price = price;
-      this.description = description;
-      this.category = category;
-      this.image = image;
-    }
+    this.title = title;
+    this.price = price;
+    this.description = description;
+    this.category = category;
+    this.image = image;
   }
 
   @ManyToOne(() => UserEntity, (user) => user.products, { nullable: true })
