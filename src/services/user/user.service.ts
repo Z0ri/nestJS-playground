@@ -14,9 +14,6 @@ export class UserService {
     private readOnlyUserRepository: Repository<UserEntity>,
   ) {}
 
-  /**
-   * Inserisce gli utenti all'interno del file .csv nel database
-   */
   async putUsersInDB(users: UserInterface[]) {
     if (!users || users.length === 0) {
       throw new HttpException(
@@ -26,94 +23,121 @@ export class UserService {
     }
 
     try {
-      // Create user entities
       const userEntities: UserEntity[] = users.map((user) => {
-        const userEntity = new UserEntity(
+        if (!user.username || !user.email || !user.password) {
+          throw new HttpException(
+            'Dati utente incompleti o non validi',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        return new UserEntity(
           user.username,
           user.email,
           user.password,
           user.money,
           user.role,
         );
-        return userEntity;
       });
 
-      // Save to database
       const savedUsers = await this.writeOnlyUserRepository.save(userEntities);
       return savedUsers;
     } catch (error) {
       throw new HttpException(
-        "Errore durante l'inserimento degli utenti",
+        `Errore nel salvataggio degli utenti: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  /**
-   * Permette di ottenere gli utenti nel DB
-   */
   async getUsers() {
-    return await this.readOnlyUserRepository.find();
-  }
-
-  /**
-   * Permette di ottenere l'utente nel database con l'id specificato
-   */
-  async getUserById(userId: number) {
-    return await this.readOnlyUserRepository.findOne({
-      where: {
-        id: userId,
-      },
-    });
-  }
-
-  /**
-   * Aggiorna un utente
-   * @param userId id dell'utente da aggiornare
-   * @param newUsername nuovo username dell'utente
-   * @param newEmail nuova email dell'utente
-   */
-  async updateUser(userId: number, newUsername?: string, newEmail?: string) {
-    const user = await this.writeOnlyUserRepository.findOne({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
+    try {
+      return await this.readOnlyUserRepository.find();
+    } catch (error) {
       throw new HttpException(
-        `Utente con id ${userId} non trovato`,
-        HttpStatus.NOT_FOUND,
+        'Errore nella ricerca degli utenti',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
-    return await this.writeOnlyUserRepository.update(
-      { id: userId },
-      {
-        username: newUsername || user.username,
-        email: newEmail || user.email,
-      },
-    );
   }
 
-  /**
-   * Elimina un utente
-   * @param userId id dell'utente da eliminare
-   */
-  async deleteUserById(userId: number) {
+  async getUserById(userId: number) {
     try {
       const user = await this.readOnlyUserRepository.findOne({
         where: { id: userId },
       });
-
       if (!user) {
-        throw new Error('User not found');
+        throw new HttpException('Utente non trovato', HttpStatus.NOT_FOUND);
+      }
+      return user;
+    } catch (error) {
+      throw new HttpException(
+        `Errore nella ricerca dell'utente con id ${userId}: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getUserByKey(userKey: string) {
+    try {
+      const foundUser = await this.readOnlyUserRepository.findOne({
+        where: { key: userKey },
+      });
+
+      if (!foundUser) {
+        throw new HttpException('Utente non trovato', HttpStatus.NOT_FOUND);
       }
 
-      return await this.writeOnlyUserRepository.remove(user);
+      return foundUser;
     } catch (error) {
-      console.error('Error deleting user:', error);
-      throw error;
+      throw new HttpException(
+        `Errore nella ricerca dell'utente con key ${userKey}: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updateUserByKey(userKey: string, newUsername?: string, newEmail?: string) {
+    try {
+      const user = await this.writeOnlyUserRepository.findOne({
+        where: { key: userKey },
+      });
+
+      if (!user) {
+        throw new HttpException(
+          `Utente con key ${userKey} non trovato`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return await this.writeOnlyUserRepository.update(
+        { key: userKey },
+        { username: newUsername || user.username, email: newEmail || user.email },
+      );
+    } catch (error) {
+      throw new HttpException(
+        `Errore nell'aggiornamento dell'utente con key ${userKey}: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async deleteUserByKey(userKey: string) {
+    try {
+      const user = await this.readOnlyUserRepository.findOne({
+        where: { key: userKey },
+      });
+
+      if (!user) {
+        throw new HttpException('Utente non trovato', HttpStatus.NOT_FOUND);
+      }
+
+      await this.writeOnlyUserRepository.remove(user);
+      return { message: `Utente con id ${userKey} eliminato con successo` };
+    } catch (error) {
+      throw new HttpException(
+        `Errore nella cancellazione dell'utente con id ${userKey}: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

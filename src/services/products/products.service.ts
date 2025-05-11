@@ -129,7 +129,8 @@ export class ProductsService {
    * Permette di creare un nuovo prodotto e inserirlo nel database
    * @returns promise della nuova product entity creata
    */
-  async createProduct(newProduct: ProductInterface): Promise<ProductEntity> {
+
+  async createProduct(newProduct: ProductInterface): Promise<{ message: string, product: ProductEntity }> {
     try {
       const productEntity = new ProductEntity(
         newProduct.title,
@@ -138,17 +139,24 @@ export class ProductsService {
         newProduct.category,
         newProduct.image,
       );
-      return await this.writeOnlyProductsRepository.save(productEntity);
+
+      const savedProduct = await this.writeOnlyProductsRepository.save(productEntity);
+
+      return {
+        message: "Nuovo prodotto creato con successo",
+        product: savedProduct,
+      };
     } catch (error) {
       throw new HttpException(
         {
-          message: "Errore nell'aggiunta del nuovo prodotto",
+          message: "Errore nella creazione del nuovo prodotto",
           error: error.message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
+
 
   /**
    * Aggiorna un prodotto nel database
@@ -261,7 +269,10 @@ export class ProductsService {
         { owner: { id: buyer.id } }
       );
   
-      return { message: 'Prodotto acquistato con successo' };
+      return { 
+        message: 'Prodotto acquistato con successo',
+        product: product
+      };
   
     } catch (error) {
     

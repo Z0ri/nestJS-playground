@@ -46,7 +46,11 @@ export class ProductsController {
   @Roles(Role.Admin)
   @Post()
   async createProduct(@Body() newProduct: ProductInterface) {
-    return await this.productsService.createProduct(newProduct);
+    try {
+      return await this.productsService.createProduct(newProduct);
+    } catch (error) {
+      throw new HttpException(error.message || "Errore nella creazione del nuovo prodotto", HttpStatus.INTERNAL_SERVER_ERROR)
+    }
   }
 
   /**
@@ -61,15 +65,41 @@ export class ProductsController {
     @Query('key') key: string,
     @Body() updatedProduct: ProductInterface,
   ) {
-    return await this.productsService.updateProductByKey(key, updatedProduct);
+    try{
+      return await this.productsService.updateProductByKey(key, updatedProduct);
+    }catch(error){
+      throw new HttpException({
+        message: "Errore nell'aggiornamento del prodotto",
+        error: error.message
+      },
+      HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
+  /**
+   * Elimina un prodotto tramite la chiave
+   * @param key chiave del prodotto da eliminare
+   * @returns messaggio di stato eliminazione
+   */
   @Roles(Role.Admin, Role.Editor)
   @Delete()
   async deleteProductByKey(@Query('key') key: string) {
-    return await this.productsService.deleteProduct(key);
+    try {
+      return await this.productsService.deleteProduct(key);
+    } catch (error) {
+      throw new HttpException({
+        message: "Errore nell'eliminazione del prodotto",
+        error: error.message
+      }, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
   }
 
+  /**
+   * Permette ad un utente di comprare un prodotto, quindi diventare il suo "owner"
+   * @param request richiesta
+   * @param productKey chiave del prodotto da comprare
+   * @returns messaggio di stato acquisto e prodotto acquistato
+   */
   @Roles(Role.Admin, Role.Editor, Role.Viewer)
   @Post('/buy')
   async buyProduct(@Req() request: Request & {user: RequestWithUser}, @Query('key') productKey: string) {
