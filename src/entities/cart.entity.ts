@@ -4,22 +4,20 @@ import { CartInterface } from 'src/interfaces/cart.interface';
 import { UserEntity } from './user.entity';
 import { ProductEntity } from './product.entity';
 import { OrderEntity } from './order.entity';
+import { CartItemsEntity } from './cartItems.entity';
 
 @Entity('carts')
 export class CartEntity extends CommonEntity implements CartInterface {
-  @Column()
+  productId: number;
+  @Column({ nullable: false })
   userId: number;
 
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @Column()
-  productId: number;
-
-  @ManyToOne(() => ProductEntity)
-  @JoinColumn({ name: 'productId' })
-  product: ProductEntity;
+  @OneToMany(() => CartItemsEntity, item => item.cart)
+  items: CartItemsEntity[];
 
   @OneToMany(() => OrderEntity, order => order.cart)
   orders: OrderEntity[];

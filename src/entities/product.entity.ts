@@ -8,6 +8,7 @@ import { CartEntity } from './cart.entity';
 import { OrderEntity } from './order.entity';
 import { CompanyEntity } from './company.entity';
 import { ReviewEntity } from './review.entity';
+import { CartItemsEntity } from './cartItems.entity';
 
 @Entity('products')
 export class ProductEntity extends CommonEntity implements ProductInterface {
@@ -44,14 +45,14 @@ export class ProductEntity extends CommonEntity implements ProductInterface {
   @JoinColumn({ name: 'companyId' })
   company: CompanyEntity;
 
+  @OneToMany(() => CartItemsEntity, item => item.product)
+  cartItems: CartItemsEntity[];
+
   @OneToMany(() => PurchaseEntity, purchase => purchase.product)
   purchases: PurchaseEntity[];
 
   @OneToMany(() => ReviewEntity, review => review.product)
   reviews: ReviewEntity[];
-
-  @OneToMany(() => CartEntity, cart => cart.product)
-  carts: CartEntity[];
 
   @OneToMany(() => OrderEntity, order => order.product)
   orders: OrderEntity[];
