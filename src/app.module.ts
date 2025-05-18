@@ -12,6 +12,7 @@ import { join } from 'path';
 import { CategoryModule } from './modules/category/category.module';
 import { CompanyModule } from './modules/company/company.module';
 import { FileReaderService } from './services/file-reader/file-reader.service';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { FileReaderService } from './services/file-reader/file-reader.service';
     ProductsModule,
     CategoryModule,
     CompanyModule,
+    CartModule,
   ],
   controllers: [AppController, DownloadController],
   providers: [AppService, FileReaderService],
