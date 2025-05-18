@@ -1,51 +1,34 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as csv from 'csv-parser';
 import { UserInterface } from './interfaces/user.interface';
 import { UserService } from './services/user/user.service';
 import { ProductsService } from './services/products/products.service';
 import { CategoryService } from './services/category/category.service';
+import { FileReaderService } from './services/file-reader/file-reader.service';
+import { CompanyService } from './services/company/company.service';
 
 @Injectable()
 export class AppService implements OnModuleInit {
   constructor(
+    private readonly companyService: CompanyService,
     private readonly categoryService: CategoryService,
     private readonly productsService: ProductsService,
     private readonly userService: UserService,
+    private readonly fileReaderService: FileReaderService
   ) {}
 
   async onModuleInit(): Promise<void> {
     //INSERIMENTO DEGLI UTENTI DI DEFAULT PRESI DAL CSV
-    const users = await this.getUsersCsvData();
-    await this.userService.putUsersInDB(users);
-    //INSERIMENTO DELLE CATEGORIE 
+    const users = await this.fileReaderService.getUsersCsvData();
+    if(users)
+          await this.userService.putUsersInDB(users);
+    // INSERIMENTO DELLE CATEGORIE 
     await this.categoryService.puDefaultCategories();
     //INSERIMENTO DEI PRODOTTI DI DEFAULT PRESI DALL'API ESTERNA
     await this.productsService.putDefaultProducts();
-  }
-
-  /**
-   * Reads users from a CSV file and returns them as an array.
-   */
-  private async getUsersCsvData(): Promise<UserInterface[]> {
-    const users: UserInterface[] = [];
-
-    const filePath = path.join(process.cwd(), 'src/users.csv');
-
-    return new Promise<UserInterface[]>((resolve, reject) => {
-      fs.createReadStream(filePath)
-        .pipe(csv({ separator: ';' }))
-        .on('data', (row: any) => {
-          users.push(row as UserInterface);
-        })
-        .on('end', () => {
-          resolve(users);
-        })
-        .on('error', (error) => {
-          console.error('Errore durante la lettura del file CSV:', error);
-          reject(error);
-        });
-    });
+    //INSERIMENTO DELLE COMPAGNIE PRESENTI NEL FILE CSV
+    const companies = await this.fileReaderService.getCompaniesCsvData();
+    console.log(companies);
+    if(companies)
+      await this.companyService.putCompaniesInDB(companies);
   }
 }

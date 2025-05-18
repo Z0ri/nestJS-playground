@@ -46,11 +46,7 @@ export class ProductsController {
   @Roles(RoleEnum.Admin)
   @Post()
   async createProduct(@Body() newProduct: ProductInterface) {
-    try {
-      return await this.productsService.createProduct(newProduct);
-    } catch (error) {
-      throw new HttpException(error.message || "Errore nella creazione del nuovo prodotto", HttpStatus.INTERNAL_SERVER_ERROR)
-    }
+    return await this.productsService.createProduct(newProduct);
   }
 
   /**
@@ -91,35 +87,6 @@ export class ProductsController {
         message: "Errore nell'eliminazione del prodotto",
         error: error.message
       }, HttpStatus.INTERNAL_SERVER_ERROR)
-    }
-  }
-
-  /**
-   * Permette ad un utente di comprare un prodotto, quindi diventare il suo "owner"
-   * @param request richiesta
-   * @param productKey chiave del prodotto da comprare
-   * @returns messaggio di stato acquisto e prodotto acquistato
-   */
-  @Roles(RoleEnum.Admin, RoleEnum.Editor, RoleEnum.Viewer)
-  @Post('/buy')
-  async buyProduct(@Req() request: Request & {user: RequestWithUser}, @Query('key') productKey: string) {
-    const buyerId = request.user.id;
-  
-    try {
-      return await this.productsService.buyProduct(buyerId, productKey);
-    } catch (error) {
-  
-      if (error instanceof HttpException) {
-        throw error; 
-      }
-  
-      throw new HttpException(
-        {
-          message: "Errore imprevisto nell'acquisto del prodotto",
-          error: error.message || error.toString(),
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
   }
   

@@ -9,8 +9,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { ProductsModule } from './modules/products/products.module';
 import { join } from 'path';
-import { CategoryService } from './services/category/category.service';
 import { CategoryModule } from './modules/category/category.module';
+import { CompanyModule } from './modules/company/company.module';
+import { FileReaderService } from './services/file-reader/file-reader.service';
 
 @Module({
   imports: [
@@ -56,13 +57,14 @@ import { CategoryModule } from './modules/category/category.module';
       }),
     }),
 
+    AuthModule,
+    HttpModule,
     UserModule,
     ProductsModule,
     CategoryModule,
-    AuthModule,
-    HttpModule,
+    CompanyModule,
   ],
   controllers: [AppController, DownloadController],
-  providers: [AppService],
+  providers: [AppService, FileReaderService],
 })
 export class AppModule {}

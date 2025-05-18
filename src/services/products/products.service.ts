@@ -155,6 +155,7 @@ export class ProductsService {
           title: newProduct.title,
           price: newProduct.price,
           description: newProduct.description,
+          categoryId: newProduct.categoryId,
           company: new CompanyEntity({id: newProduct.companyId,}),
           key: newProduct.key,
         },
@@ -167,6 +168,8 @@ export class ProductsService {
         product: savedProduct,
       };
     } catch (error) {
+      if(error instanceof HttpException) throw error;
+      
       throw new HttpException(
         {
           message: "Errore nella creazione del nuovo prodotto",
@@ -246,15 +249,6 @@ export class ProductsService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  }
-
-  /**
-   * Effettua l'acquisto di un prodotto
-   * @param buyerId id del compratore
-   * @param productId id del prodotto comprato
-   */
-  async buyProduct(buyerId: number, productKey: string) {
-    //compra prodotto
   }
   
   
