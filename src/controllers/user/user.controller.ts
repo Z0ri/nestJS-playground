@@ -16,10 +16,10 @@ import {
 import { Response } from 'express';
 import { Roles } from 'src/decorators/roles/roles.decorator';
 import { UserInterface } from 'src/interfaces/user.interface';
-import { Role } from 'src/enum/Roles';
 import { AuthGuard } from 'src/guards/auth/auth.guard';
 import { RolesGuard } from 'src/guards/roles/roles.guard';
 import { UserService } from 'src/services/user/user.service';
+import { RoleEnum } from 'src/enum/Roles';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('users')
@@ -27,7 +27,7 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Get()
-  @Roles(Role.Admin, Role.Editor, Role.Viewer)
+  @Roles(RoleEnum.Admin, RoleEnum.Editor, RoleEnum.Viewer)
   async getUsers(@Query('key') userKey: string) {
     if (userKey) {
       return this.getUserByKey(userKey);
@@ -39,7 +39,7 @@ export class UserController {
     return this.userService.getUserByKey(userKey);
   }
 
-  @Roles(Role.Admin)
+  @Roles(RoleEnum.Admin)
   @Post()
   async createUser(@Res() response: Response, @Body() newUser: UserInterface) {
     try {
@@ -57,7 +57,7 @@ export class UserController {
     }
   }
 
-  @Roles(Role.Admin, Role.Editor)
+  @Roles(RoleEnum.Admin, RoleEnum.Editor)
   @Patch()
   async updateUserByKey(
     @Query('key') userKey: string,  
@@ -91,7 +91,7 @@ export class UserController {
     }
   }
 
-  @Roles(Role.Admin, Role.Editor)
+  @Roles(RoleEnum.Admin, RoleEnum.Editor)
   @Delete()
   async deleteUserByKey(@Query('key') userKey: string, @Res() response: Response) {
     try {

@@ -31,11 +31,15 @@ export class UserService {
           );
         }
         return new UserEntity(
-          user.username,
-          user.email,
-          user.password,
-          user.money,
-          user.role,
+          {
+            username: user.username,
+            email: user.email,
+            password: user.password,
+            money: user.money || 0,
+            role: user.role || 'user',
+            addressId: user.addressId || null,
+            key: user.key || null,
+          }
         );
       });
 

@@ -6,12 +6,11 @@ import { UserModule } from './modules/user/user.module';
 import { DownloadController } from './controllers/download/download.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserEntity } from './entities/user.entity';
-import { ProductEntity } from './entities/product.entity';
-import { ProductsController } from './controllers/products/products.controller';
-import { ProductsService } from './services/products/products.service';
 import { HttpModule } from '@nestjs/axios';
 import { ProductsModule } from './modules/products/products.module';
+import { join } from 'path';
+import { CategoryService } from './services/category/category.service';
+import { CategoryModule } from './modules/category/category.module';
 
 @Module({
   imports: [
@@ -28,8 +27,8 @@ import { ProductsModule } from './modules/products/products.module';
       useFactory: (configService: ConfigService) => ({
         type: 'sqlite',
         database: configService.get<string>('DB_NAME'),
-        entities: [UserEntity, ProductEntity],
-        synchronize: false,
+        entities: [join(__dirname, 'entities', '*.entity{.ts,.js}')],
+        synchronize: true,
       }),
     }),
 
@@ -41,7 +40,7 @@ import { ProductsModule } from './modules/products/products.module';
       useFactory: (configService: ConfigService) => ({
         type: 'sqlite',
         database: configService.get<string>('DB_NAME'),
-        entities: [UserEntity, ProductEntity],
+        entities: [join(__dirname, 'entities', '*.entity{.ts,.js}')],
       }),
     }),
 
@@ -53,13 +52,14 @@ import { ProductsModule } from './modules/products/products.module';
       useFactory: (configService: ConfigService) => ({
         type: 'sqlite',
         database: configService.get<string>('DB_NAME'),
-        entities: [UserEntity, ProductEntity],
+        entities: [join(__dirname, 'entities', '*.entity{.ts,.js}')],
       }),
     }),
 
     UserModule,
-    AuthModule,
     ProductsModule,
+    CategoryModule,
+    AuthModule,
     HttpModule,
   ],
   controllers: [AppController, DownloadController],

@@ -21,7 +21,7 @@ export class AuthController {
   ) {
     try {
       const { username, password } = body;
-      console.log('body: ', body);
+
       if (!username) {
         return response.status(HttpStatus.BAD_REQUEST).json({
           messsage: 'Username non fornito.',
@@ -35,7 +35,7 @@ export class AuthController {
       }
 
       const access_token = await this.authService.login(username, password); //prende l'access token se il login va a buon fine
-      console.log('access_token: ', access_token);
+
       response.cookie('authorization', {
         httpOnly: true,
         sameSite: 'Strict',
@@ -43,8 +43,8 @@ export class AuthController {
       });
 
       return response.status(HttpStatus.OK).json({
-        message: 'Accesso avvenuto con successo!',
-        token: access_token,
+        success: true,
+        access_token: access_token,
       });
     } catch (error) {
       response.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({

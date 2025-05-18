@@ -5,20 +5,24 @@ import * as csv from 'csv-parser';
 import { UserInterface } from './interfaces/user.interface';
 import { UserService } from './services/user/user.service';
 import { ProductsService } from './services/products/products.service';
+import { CategoryService } from './services/category/category.service';
 
 @Injectable()
 export class AppService implements OnModuleInit {
   constructor(
+    private readonly categoryService: CategoryService,
     private readonly productsService: ProductsService,
     private readonly userService: UserService,
   ) {}
 
   async onModuleInit(): Promise<void> {
     //INSERIMENTO DEGLI UTENTI DI DEFAULT PRESI DAL CSV
-    // const users = await this.getUsersCsvData();
-    // await this.userService.putUsersInDB(users);
+    const users = await this.getUsersCsvData();
+    await this.userService.putUsersInDB(users);
+    //INSERIMENTO DELLE CATEGORIE 
+    await this.categoryService.puDefaultCategories();
     //INSERIMENTO DEI PRODOTTI DI DEFAULT PRESI DALL'API ESTERNA
-    // this.productsService.putDefaultProducts();
+    await this.productsService.putDefaultProducts();
   }
 
   /**

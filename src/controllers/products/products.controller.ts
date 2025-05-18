@@ -12,7 +12,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { Roles } from 'src/decorators/roles/roles.decorator';
-import { Role } from 'src/enum/Roles';
+import { RoleEnum } from 'src/enum/Roles';
 import { AuthGuard } from 'src/guards/auth/auth.guard';
 import { RolesGuard } from 'src/guards/roles/roles.guard';
 import { ProductInterface } from 'src/interfaces/product.interface';
@@ -28,7 +28,7 @@ export class ProductsController {
    * Permette di ottenere tutti i prodotti o solo uno specifico se specificata la chiave nella query
    * @returns array di prodotti
    */
-  @Roles(Role.Admin, Role.Editor, Role.Viewer)
+  @Roles(RoleEnum.Admin, RoleEnum.Editor, RoleEnum.Viewer)
   @Get()
   async getProducts(@Query('key') key: string) {
     if (key) {
@@ -43,7 +43,7 @@ export class ProductsController {
    * @param newProduct nuovo prodotto nel body
    * @retuns nuovo prodotto creato
    */
-  @Roles(Role.Admin)
+  @Roles(RoleEnum.Admin)
   @Post()
   async createProduct(@Body() newProduct: ProductInterface) {
     try {
@@ -59,7 +59,7 @@ export class ProductsController {
    * @param updatedProduct prodotto aggiornato nel body
    * @returns prodotto aggiornato
    */
-  @Roles(Role.Admin, Role.Editor)
+  @Roles(RoleEnum.Admin, RoleEnum.Editor)
   @Patch()
   async updateProductByKey(
     @Query('key') key: string,
@@ -81,7 +81,7 @@ export class ProductsController {
    * @param key chiave del prodotto da eliminare
    * @returns messaggio di stato eliminazione
    */
-  @Roles(Role.Admin, Role.Editor)
+  @Roles(RoleEnum.Admin, RoleEnum.Editor)
   @Delete()
   async deleteProductByKey(@Query('key') key: string) {
     try {
@@ -100,7 +100,7 @@ export class ProductsController {
    * @param productKey chiave del prodotto da comprare
    * @returns messaggio di stato acquisto e prodotto acquistato
    */
-  @Roles(Role.Admin, Role.Editor, Role.Viewer)
+  @Roles(RoleEnum.Admin, RoleEnum.Editor, RoleEnum.Viewer)
   @Post('/buy')
   async buyProduct(@Req() request: Request & {user: RequestWithUser}, @Query('key') productKey: string) {
     const buyerId = request.user.id;

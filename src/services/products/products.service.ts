@@ -6,6 +6,9 @@ import { ProductInterface } from 'src/interfaces/product.interface';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { UserEntity } from 'src/entities/user.entity';
+import { CategoryEntity } from 'src/entities/category.entity';
+import { CompanyEntity } from 'src/entities/company.entity';
+import { CategoryEnum } from 'src/enum/Category.enum';
 
 @Injectable()
 export class ProductsService {
@@ -29,31 +32,42 @@ export class ProductsService {
    * Inserisce i prodotti di default presi dall'api free di fakestore
    * @returns promise di ProductEntity[]
    */
-  async putDefaultProducts(): Promise<ProductEntity[]> {
+    async putDefaultProducts(): Promise<ProductEntity[]> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get<ProductInterface[]>(
+        this.httpService.get<any>(
           'https://fakestoreapi.com/products',
         ),
       );
-  
-      const products: ProductInterface[] = response.data;
-  
-      // Create product entities without the owner property
-      const productEntities: ProductEntity[] = products.map((product) => {
-        const productEntity = new ProductEntity(
-          product.title,
-          product.price,
-          product.description,
-          product.category,
-          product.image,
-        );
-        // Important: initialize the owner property to null or it can be omitted
-        // This is because the relationship is optional from the Product side
-        return productEntity;
+
+      const products: any[] = response.data;
+
+      // Mappa per associare la categoria all'id della stessa nel database
+      const categoryNameToId: Record<CategoryEnum, number> = {
+        [CategoryEnum.MENS_CLOTHING]: 1,
+        [CategoryEnum.WOMENS_CLOTHING]: 2,
+        [CategoryEnum.JEWELERY]: 3,
+        [CategoryEnum.ELECTRONICS]: 4,
+      };
+
+      const productEntities: ProductEntity[] = products.map(product => {
+        const categoryId = categoryNameToId[product.category as CategoryEnum];
+
+        if (!categoryId) {
+          throw new Error(`Unknown category: ${product.category}`);
+        }
+
+        return new ProductEntity({
+          title: product.title,
+          price: product.price,
+          description: product.description,
+          image: product.image,
+          quantity: 10, 
+          categoryId: categoryId,
+          key: product.key,
+        });
       });
-  
-      // Save the products to the database
+
       return this.writeOnlyProductsRepository.save(productEntities);
     } catch (error) {
       console.error("Error inserting default products:", error);
@@ -63,6 +77,7 @@ export class ProductsService {
       );
     }
   }
+
 
   /**
    * Permette di ottenere tutti i prodotti salvati nel database
@@ -133,11 +148,13 @@ export class ProductsService {
   async createProduct(newProduct: ProductInterface): Promise<{ message: string, product: ProductEntity }> {
     try {
       const productEntity = new ProductEntity(
-        newProduct.title,
-        newProduct.price,
-        newProduct.description,
-        newProduct.category,
-        newProduct.image,
+        {
+          title: newProduct.title,
+          price: newProduct.price,
+          description: newProduct.description,
+          company: new CompanyEntity({id: newProduct.companyId,}),
+          key: newProduct.key,
+        },
       );
 
       const savedProduct = await this.writeOnlyProductsRepository.save(productEntity);
@@ -221,72 +238,7 @@ export class ProductsService {
    * @param productId id del prodotto comprato
    */
   async buyProduct(buyerId: number, productKey: string) {
-    try {
-      const buyer: UserEntity = await this.readOnlyUserRepository.findOne({
-        where: { id: buyerId }
-      });
-  
-      // verifica se esiste l'utente
-      if (!buyer) {
-        throw new HttpException("Nessun utente trovato con l'id specificato", HttpStatus.NOT_FOUND);
-      }
-  
-      // Trova il prodotto
-      const product: ProductEntity = await this.readOnlyProductsRepository.findOne({
-        where: { key: productKey },
-        relations: { owner: true }
-      });
-  
-      // verifica se esiste il prodotto
-      if (!product) {
-        throw new HttpException("Nessun prodotto trovato con l'id specificato", HttpStatus.NOT_FOUND);
-      }
-  
-      // Verifica se l'utente è il proprietario del prodotto
-      if (product.owner && product.owner.id === buyer.id) {
-        throw new HttpException("Prodotto già posseduto dall'utente", HttpStatus.CONFLICT);
-      }
-
-      //verifica se il prodotto è già stato comprato
-      if(product.owner){
-        throw new HttpException("Impossibile acquistare il prodotto: prodotto già acquistato da qualcun'altro", HttpStatus.CONFLICT);
-      }
-  
-      // Verifica se l'utente ha abbastanza soldi
-      if (buyer.money < product.price) {
-        throw new HttpException("Impossibile acquistare il prodotto: saldo insufficiente", HttpStatus.BAD_REQUEST);
-      }
-      
-      // sottrazione soldi dall'utente
-      await this.writeOnlyUserRepository.update(
-        { id: buyer.id },
-        { money: buyer.money - product.price }
-      );
-      
-      //associa il proprietario del prodotto all'utente
-      await this.writeOnlyProductsRepository.update(
-        { id: product.id },
-        { owner: { id: buyer.id } }
-      );
-  
-      return { 
-        message: 'Prodotto acquistato con successo',
-        product: product
-      };
-  
-    } catch (error) {
-    
-      if (error instanceof HttpException) throw error;
-    
-      throw new HttpException(
-        {
-          message: "Errore imprevisto nell'acquisto del prodotto",
-          error: error.message || error.toString(),
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-    
+    //compra prodotto
   }
   
   

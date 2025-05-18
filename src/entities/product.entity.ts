@@ -1,40 +1,58 @@
-import { ProductInterface } from 'src/interfaces/product.interface';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { CommonEntity } from './common.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { ProductInterface } from 'src/interfaces/product.interface';
+import { CategoryEntity } from './category.entity';
 import { UserEntity } from './user.entity';
+import { PurchaseEntity } from './purchase.entity';
+import { CartEntity } from './cart.entity';
+import { OrderEntity } from './order.entity';
+import { CompanyEntity } from './company.entity';
+import { ReviewEntity } from './review.entity';
 
 @Entity('products')
 export class ProductEntity extends CommonEntity implements ProductInterface {
-  constructor(
-    title?: string,
-    price?: number,
-    description?: string,
-    category?: string,
-    image?: string,
-  ) {
+  constructor(partial: Partial<ProductEntity>) {
     super();
-    this.title = title;
-    this.price = price;
-    this.description = description;
-    this.category = category;
-    this.image = image;
+    Object.assign(this, partial);
   }
-
-  @ManyToOne(() => UserEntity, (user) => user.products, { nullable: true })
-  owner: UserEntity | null;
-
-  @Column({ type: 'varchar', nullable: false })
+  
+  @Column({ nullable: false })
   title: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'float', nullable: false })
   price: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', nullable: false })
-  category: string;
-
-  @Column({ type: 'varchar' })
+  @Column({ nullable: true })
   image: string;
+
+  @Column({ nullable: false, default: 0 })
+  quantity: number;
+
+  @Column()
+  categoryId: number;
+
+  @ManyToOne(() => CategoryEntity)
+  @JoinColumn({ name: 'categoryId' })
+  category: CategoryEntity;
+
+  companyId: number;
+
+  @ManyToOne(() => CompanyEntity)
+  @JoinColumn({ name: 'companyId' })
+  company: CompanyEntity;
+
+  @OneToMany(() => PurchaseEntity, purchase => purchase.product)
+  purchases: PurchaseEntity[];
+
+  @OneToMany(() => ReviewEntity, review => review.product)
+  reviews: ReviewEntity[];
+
+  @OneToMany(() => CartEntity, cart => cart.product)
+  carts: CartEntity[];
+
+  @OneToMany(() => OrderEntity, order => order.product)
+  orders: OrderEntity[];
 }
