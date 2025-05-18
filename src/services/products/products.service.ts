@@ -25,6 +25,9 @@ export class ProductsService {
     @InjectRepository(UserEntity, 'writeOnlyConnection')
     private readonly writeOnlyUserRepository: Repository<UserEntity>,
 
+    @InjectRepository(CategoryEntity, 'readOnlyConnection')
+    private readonly readonlyCategoryRepository: Repository<CategoryEntity>,
+
     private readonly httpService: HttpService,
   ) {}
 
@@ -199,6 +202,18 @@ export class ProductsService {
         );
       }
 
+      const existingCategory = await this.readonlyCategoryRepository.findOne({
+        where:  {
+          id: newProduct.categoryId
+        }
+      })
+
+      if(!existingCategory){
+        throw new HttpException({
+          message: "Categoria inesistente"
+        }, HttpStatus.NOT_FOUND);
+      }
+
       const updateResult = await this.writeOnlyProductsRepository.update(
         { key },
         newProduct,
@@ -207,7 +222,7 @@ export class ProductsService {
       if (updateResult.affected === 0) {
         throw new HttpException(
           {
-            message: 'Nessuna modifica apportata al prodotto',
+            message: 'Prodotto attuale e nuovo identici',
           },
           HttpStatus.BAD_REQUEST,
         );
@@ -219,13 +234,14 @@ export class ProductsService {
 
       return {
         message: 'Prodotto aggiornato con successo',
-        updatedProduct,
+        updatedProduct: updatedProduct,
       };
     } catch (error) {
+      if(error instanceof HttpException) throw error;
+      
       throw new HttpException(
         {
-          message: "Errore durante l'aggiornamento del prodotto",
-          error: error.message,
+          message: error.message || "Errore durante l'aggiornamento del prodotto",
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
