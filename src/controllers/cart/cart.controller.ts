@@ -28,12 +28,21 @@ export class CartController {
         return await this.cartService.getCartItems(id);
     }
 
-    @Post('item')
+    @Post('item/user')
     @Roles(RoleEnum.Admin, RoleEnum.Editor, RoleEnum.Viewer)
     async addUserItem(
         @Query('key') productKey: string,
         @Req() request: Request & {user: RequestWithUser}
     ){
         return await this.cartService.addItemToUserCart(productKey, request.user.key);
+    }
+
+    @Post('item')
+    @Roles(RoleEnum.Admin, RoleEnum.Editor, RoleEnum.Viewer)
+    async addItem(
+        @Query('productKey') productKey: string,
+        @Query('cartKey') cartKey: string
+    ){
+        return await this.cartService.addItemToCart(productKey, cartKey);
     }
 }
