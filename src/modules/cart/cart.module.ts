@@ -6,6 +6,7 @@ import { CartItemsEntity } from 'src/entities/cartItems.entity';
 import { ProductEntity } from 'src/entities/product.entity';
 import { UserEntity } from 'src/entities/user.entity';
 import { CartService } from 'src/services/cart/cart.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { CartService } from 'src/services/cart/cart.service';
 
         TypeOrmModule.forFeature([CartItemsEntity], "readOnlyConnection"),
         TypeOrmModule.forFeature([CartItemsEntity], "writeOnlyConnection"),
+        AuthModule
     ],
     controllers: [CartController],
     providers: [CartService],
