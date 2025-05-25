@@ -1,15 +1,15 @@
-import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn, BeforeInsert, OneToOne } from 'typeorm';
 import { CommonEntity } from './common.entity';
 import { UserInterface } from 'src/interfaces/user.interface';
 import { AddressEntity } from './address.entity';
 import { PurchaseEntity } from './purchase.entity';
 import { CartEntity } from './cart.entity';
-import { ProductEntity } from './product.entity';
 import { ReviewEntity } from './review.entity';
+import * as bcrypt from 'bcryptjs';
+
 
 @Entity('users')
 export class UserEntity extends CommonEntity implements UserInterface {
-
   constructor(partial?: Partial<UserEntity>) {
     super();
     Object.assign(this, partial);
@@ -43,6 +43,12 @@ export class UserEntity extends CommonEntity implements UserInterface {
   @OneToMany(() => ReviewEntity, review => review.author)
   reviews: ReviewEntity[];
 
-  @OneToMany(() => CartEntity, cart => cart.user)
-  carts: CartEntity[];
+  @OneToOne(() => CartEntity, cart => cart.user)
+  cart: CartEntity;
+
+  @BeforeInsert()
+  async criptPassword() {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
 }

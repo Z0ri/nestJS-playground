@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { CommonEntity } from './common.entity';
 import { CartInterface } from 'src/interfaces/cart.interface';
 import { UserEntity } from './user.entity';
@@ -12,7 +12,7 @@ export class CartEntity extends CommonEntity implements CartInterface {
   @Column({ nullable: false })
   userId: number;
 
-  @ManyToOne(() => UserEntity)
+  @OneToOne(() => UserEntity, user => user.cart)
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
